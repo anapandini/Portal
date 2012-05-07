@@ -39,21 +39,30 @@ public class PortalAPI {
 	 * @param frustumsAuxiliares
 	 */
 	private void visao(Ponto fo, Ponto fd, Ponto fe, Sala salaCorrente, List<PontoInteresse> pontosInteresse, Camera camera, List<Integer> idSalasVisitadas, List<Frustum> frustumsAuxiliares) {
+
+		// Verifica se já visitou a sala atual do observador
 		if (!idSalasVisitadas.contains(salaCorrente.getIdentificadorSala())) {
 
+			// Grava a sala que está sendo visitada
 			idSalasVisitadas.add(salaCorrente.getIdentificadorSala());
 
+			// Para todos os pontos de interesse verifica os que estão no campo de visão
 			for (PontoInteresse wp : pontosInteresse) {
 				if (wp.getSala().getIdentificadorSala() == salaCorrente.getIdentificadorSala()) {
 					if (PortalAPI_Utils.pontoNoTrianguloMatrizDalton(fo, fd, fe, wp)) {
+						// Salva no observador todos os pontos de interesse que ele vê
 						camera.adicionaPontoVisto(wp);
 					}
 				}
 			}
 
+			// Trecho do código que é responsável por definir as coordenadas de um frustum auxiliar caso o campo de visão principal esteja vendo um portal
 			Ponto novoFd = null;
 			Ponto novoFe = null;
+			// Para todos os portais que a sala do observador possui...
 			for (Divisao div : salaCorrente.getPortais()) {
+				// ... é verificado se algum dos lados do frustum intercepta
+				// significando que então o campo de visão vê até a outra sala 
 				if (PortalAPI_Utils.intercepta(fo, fe, div.getDestino(), div.getOrigem())) {
 					novoFe = fe;
 					if (PortalAPI_Utils.pontoNoTrianguloMatrizDalton(fo, fe, fd, div.getDestino())) {
@@ -63,6 +72,9 @@ public class PortalAPI {
 					} else {
 						novoFd = fd;
 					}
+				// Esta verificação é feita para os dois lados do frustum
+				// e dessa forma é possível descobrir as novas coordenadas de um
+				// frustum auxiliar
 				} else if (PortalAPI_Utils.intercepta(fo, fd, div.getDestino(), div.getOrigem())) {
 					novoFd = fd;
 					if (PortalAPI_Utils.pontoNoTrianguloMatrizDalton(fo, fe, fd, div.getDestino())) {
@@ -101,8 +113,13 @@ public class PortalAPI {
 	 * @see br.furb.portal.api.PortalAPI#visao(br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Sala, java.util.List, br.furb.portal.api.model.Camera, java.util.List, java.util.List)
 	 */
 	public List<Frustum> visaoCamera(List<PontoInteresse> pontosInteresse, Map<Integer, Sala> salas, Camera camera, Frustum frustum) {
+		// Cria uma lista para guardar campos de visão auxiliares, que podem ser utilizados
+		// para representar graficamente o que está sendo visto por cada portal a partir do observador
 		List<Frustum> frustumsAuxiliares = new ArrayList<Frustum>();
+
+		// Chama método privado responsável por executar a atividade
 		visao(frustum.getFrustumOrigin(), frustum.getFrustumRight(), frustum.getFrustumLeft(), camera.getSala(), pontosInteresse, camera, new ArrayList<Integer>(), frustumsAuxiliares);
+
 		return frustumsAuxiliares;
 	}
 
@@ -122,16 +139,18 @@ public class PortalAPI {
 	 */
 	public void moverCamera(Camera camera, float novoXCamera, float novoYCamera, List<PontoInteresse> pontosInteresse, Map<Integer, Sala> salas, Frustum frustum) {
 		boolean podeMover = true;
+		// Recupera as divisões que formam a sala do observador
 		for (Divisao div : camera.getSala().getDivisoes()) {
 
 			if (PortalAPI_Utils.intercepta(camera, new Ponto(novoXCamera, novoYCamera, null), div.getOrigem(), div.getDestino())) {
+				// Verifica se o observador está trocando de sala  
 				if (div.getTipo() == TipoDivisao.PORTAL) {
 					if (div.getSalaOrigem().getIdentificadorSala() == camera.getSala().getIdentificadorSala()) {
 						camera.setSala(div.getSalaDestino());
 					} else {
 						camera.setSala(div.getSalaOrigem());
 					}
-					// Log.d("tcc", String.valueOf(camera.getSala().getIdentificadorSala())); // TODO será que removo essa linha?
+				// Ou se ele está de frente para uma parede
 				} else {
 					podeMover = false;
 				}
@@ -139,6 +158,7 @@ public class PortalAPI {
 			}
 		}
 		if (podeMover) {
+			// Grava novas coordenadas
 			camera.setX(novoXCamera);
 			camera.setY(novoYCamera);
 			frustum.atualizarCoordenadas();
