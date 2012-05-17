@@ -62,7 +62,7 @@ public class PortalAPI {
 			// Para todos os portais que a sala do observador possui...
 			for (Divisao div : salaCorrente.getPortais()) {
 				// ... é verificado se algum dos lados do frustum intercepta
-				// significando que então o campo de visão vê até a outra sala 
+				// significando que então o campo de visão vê até a outra sala
 				if (PortalAPI_Utils.intercepta(fo, fe, div.getDestino(), div.getOrigem())) {
 					novoFe = fe;
 					if (PortalAPI_Utils.pontoNoTrianguloMatrizDalton(fo, fe, fd, div.getDestino())) {
@@ -72,9 +72,9 @@ public class PortalAPI {
 					} else {
 						novoFd = fd;
 					}
-				// Esta verificação é feita para os dois lados do frustum
-				// e dessa forma é possível descobrir as novas coordenadas de um
-				// frustum auxiliar
+					// Esta verificação é feita para os dois lados do frustum
+					// e dessa forma é possível descobrir as novas coordenadas de um
+					// frustum auxiliar
 				} else if (PortalAPI_Utils.intercepta(fo, fd, div.getDestino(), div.getOrigem())) {
 					novoFd = fd;
 					if (PortalAPI_Utils.pontoNoTrianguloMatrizDalton(fo, fe, fd, div.getDestino())) {
@@ -113,6 +113,8 @@ public class PortalAPI {
 	 * @see br.furb.portal.api.PortalAPI#visao(br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Sala, java.util.List, br.furb.portal.api.model.Camera, java.util.List, java.util.List)
 	 */
 	public List<Frustum> visaoCamera(List<PontoInteresse> pontosInteresse, Map<Integer, Sala> salas, Camera camera, Frustum frustum) {
+		long inicio = System.currentTimeMillis();
+
 		// Cria uma lista para guardar campos de visão auxiliares, que podem ser utilizados
 		// para representar graficamente o que está sendo visto por cada portal a partir do observador
 		List<Frustum> frustumsAuxiliares = new ArrayList<Frustum>();
@@ -120,6 +122,8 @@ public class PortalAPI {
 		// Chama método privado responsável por executar a atividade
 		visao(frustum.getFrustumOrigin(), frustum.getFrustumRight(), frustum.getFrustumLeft(), camera.getSala(), pontosInteresse, camera, new ArrayList<Integer>(), frustumsAuxiliares);
 
+		long duracao = System.currentTimeMillis() - inicio;
+		PortalAPI_Utils.gravarLog("visaoCamera", duracao);
 		return frustumsAuxiliares;
 	}
 
@@ -138,19 +142,21 @@ public class PortalAPI {
 	 * @param frustum
 	 */
 	public void moverCamera(Camera camera, float novoXCamera, float novoYCamera, List<PontoInteresse> pontosInteresse, Map<Integer, Sala> salas, Frustum frustum) {
+		long inicio = System.currentTimeMillis();
+
 		boolean podeMover = true;
 		// Recupera as divisões que formam a sala do observador
 		for (Divisao div : camera.getSala().getDivisoes()) {
 
 			if (PortalAPI_Utils.intercepta(camera, new Ponto(novoXCamera, novoYCamera, null), div.getOrigem(), div.getDestino())) {
-				// Verifica se o observador está trocando de sala  
+				// Verifica se o observador está trocando de sala
 				if (div.getTipo() == TipoDivisao.PORTAL) {
 					if (div.getSalaOrigem().getIdentificadorSala() == camera.getSala().getIdentificadorSala()) {
 						camera.setSala(div.getSalaDestino());
 					} else {
 						camera.setSala(div.getSalaOrigem());
 					}
-				// Ou se ele está de frente para uma parede
+					// Ou se ele está de frente para uma parede
 				} else {
 					podeMover = false;
 				}
@@ -163,6 +169,17 @@ public class PortalAPI {
 			camera.setY(novoYCamera);
 			frustum.atualizarCoordenadas();
 		}
+
+		long duracao = System.currentTimeMillis() - inicio;
+		PortalAPI_Utils.gravarLog("moverCamera", duracao);
+	}
+
+	public void desligaLogTempos() {
+		PortalAPI_Utils.setLogTempos(false);
+	}
+
+	public void ligaLogTempos() {
+		PortalAPI_Utils.setLogTempos(true);
 	}
 
 }

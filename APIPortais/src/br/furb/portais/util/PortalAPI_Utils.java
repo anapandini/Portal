@@ -1,5 +1,8 @@
 package br.furb.portais.util;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +20,10 @@ import br.furb.portais.modelo.Ponto;
  */
 public class PortalAPI_Utils {
 
+	private static boolean logTempos = false;
+
+	private static FileWriter fw;
+
 	/**
 	 * Verifica se os dois segmentos de reta se intersectam.
 	 * O segmento de reta 1 é definido pelos pontos <code>a</code> e <code>b</code>,
@@ -29,7 +36,11 @@ public class PortalAPI_Utils {
 	 * @return Retorna verdadeiro quando os dois segmentos de reta se intersectam. Caso contrário, retorna falso.
 	 */
 	public static boolean intercepta(Ponto a, Ponto b, Ponto c, Ponto d) {
-		return se_encontram(a, b, c, d) || se_tocam(a, b, c, d) || se_intercepta(a, b, c, d);
+		long inicio = System.currentTimeMillis();
+		boolean intercepta = se_encontram(a, b, c, d) || se_tocam(a, b, c, d) || se_intercepta(a, b, c, d);
+		long duracao = System.currentTimeMillis() - inicio;
+		gravarLog("intercepta", duracao);
+		return intercepta;
 	}
 
 	/**
@@ -272,6 +283,7 @@ public class PortalAPI_Utils {
 	 * @return
 	 */
 	public static boolean pontoNoTrianguloUsandoSomaAreas(Ponto of, Ponto rf, Ponto lf, Ponto ponto) {
+		long inicio = System.currentTimeMillis();
 		// Fonte: ???
 		// TODO Fazer método que gere triângulos com os pontos do frustum + o waypoint e ver se a área deles é igual a área do frustum
 		double areaOLR = areaTriangulo(of, lf, rf);
@@ -279,7 +291,11 @@ public class PortalAPI_Utils {
 		double areaORW = areaTriangulo(of, rf, ponto);
 		double areaLRW = areaTriangulo(lf, rf, ponto);
 
-		return (areaOLW + areaORW + areaLRW) <= areaOLR; // TODO alterei na reunião, antes estava usando == no lugar de <=
+		boolean noTriangulo = (areaOLW + areaORW + areaLRW) <= areaOLR; // TODO alterei na reunião, antes estava usando == no lugar de <=
+
+		long duracao = System.currentTimeMillis() - inicio;
+		gravarLog("pontoNoTrianguloUsandoSomaAreas", duracao);
+		return noTriangulo;
 	}
 
 	// TODO Procurar o livro para documentar este método de forma decente
@@ -293,8 +309,11 @@ public class PortalAPI_Utils {
 	 * @return
 	 */
 	public static boolean pontoNoTrianguloMatrizDalton(Ponto a, Ponto b, Ponto c, Ponto d) {
+		long inicio = System.currentTimeMillis();
+
 		Ponto ab = null;
 		Ponto ac = null;
+		boolean retorno = false;
 		float ter;
 		float[][] matrizAuxiliar = new float[2][2];
 		float[][] matrizI = new float[2][2]; // TODO que nome é esse??
@@ -320,10 +339,12 @@ public class PortalAPI_Utils {
 		s = (at.getX() * matrizI[0][0]) + (at.getY() * matrizI[1][0]);
 		t = (at.getX() * matrizI[0][1]) + (at.getY() * matrizI[1][1]);
 		if (!((s < 0) || (t < 0) || ((s + t) > 1))) {
-			return true;
+			retorno = true;
 		}
 
-		return false;
+		long duracao = System.currentTimeMillis() - inicio;
+		gravarLog("pontoNoTrianguloMatrizDalton", duracao);
+		return retorno;
 	}
 
 	/**
@@ -337,6 +358,9 @@ public class PortalAPI_Utils {
 	 * @return
 	 */
 	public static boolean pontoNoTrianguloScanline(Ponto fo, Ponto fe, Ponto fd, Ponto pontoInteresse) {
+		long inicio = System.currentTimeMillis();
+
+		boolean retorno = false;
 		List<Ponto> points = new ArrayList<Ponto>();
 		points.add(fo);
 		points.add(fd);
@@ -361,10 +385,12 @@ public class PortalAPI_Utils {
 			}
 		}
 		if (n % 2 != 0) {
-			return true;
+			retorno = true;
 		}
 
-		return false;
+		long duracao = System.currentTimeMillis() - inicio;
+		gravarLog("pontoNoTrianguloScanline", duracao);
+		return retorno;
 	}
 
 	/**
@@ -391,9 +417,49 @@ public class PortalAPI_Utils {
 	 * @return
 	 */
 	public static Ponto getInterseccaoRetas(Ponto k, Ponto l, Ponto m, Ponto n) {
+		long inicio = System.currentTimeMillis();
 		float det = (n.getX() - m.getX()) * (l.getY() - k.getY()) - (n.getY() - m.getY()) * (l.getX() - k.getX());
 		float s = ((n.getX() - m.getX()) * (m.getY() - k.getY()) - (n.getY() - m.getY()) * (m.getX() - k.getX())) / det;
-		return new Ponto(k.getX() + (l.getX() - k.getX()) * s, k.getY() + (l.getY() - k.getY()) * s, null);
+		Ponto ponto = new Ponto(k.getX() + (l.getX() - k.getX()) * s, k.getY() + (l.getY() - k.getY()) * s, null);
+		long duracao = System.currentTimeMillis() - inicio;
+		gravarLog("getInterseccaoRetas", duracao);
+		return ponto;
+	}
+
+	public static void setLogTempos(boolean logTempos) {
+		PortalAPI_Utils.logTempos = logTempos;
+		if (!PortalAPI_Utils.logTempos) {
+			finalizaGravacaoLog();
+			fw = null;
+		}
+	}
+
+	public static void gravarLog(String metodo, long duracao) {
+		if (PortalAPI_Utils.logTempos) {
+			if (fw == null) {
+				try {
+					fw = new FileWriter(new File("/sdcard/TemposTCC.txt"));
+				} catch (IOException e) {
+					System.out.println("Erro ao criar arquivo de log dos tempos." + e);
+				}
+			}
+			try {
+				fw.write("Método: " + metodo + "\tDuração: " + duracao + "\r\n");
+			} catch (IOException e) {
+				System.out.println("Erro ao escrever no arquivo de log dos tempos" + e);
+			}
+		}
+	}
+
+	public static void finalizaGravacaoLog() {
+		if (fw != null) {
+			try {
+				fw.flush();
+				fw.close();
+			} catch (IOException e) {
+				System.out.println("Erros ao fechar o arquivo." + e);
+			}
+		}
 	}
 
 }
