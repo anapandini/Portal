@@ -178,6 +178,10 @@ public class PortalAPI {
 		this.desligaLogTempos();
 	}
 
+	public void encerrarProcessos() {
+		PortalAPI_Utils.encerraLog();
+	}
+
 	private void desligaLogTempos() {
 		PortalAPI_Utils.setLogTempos(false);
 	}

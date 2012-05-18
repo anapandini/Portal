@@ -430,7 +430,6 @@ public class PortalAPI_Utils {
 		PortalAPI_Utils.logTempos = logTempos;
 		if (!PortalAPI_Utils.logTempos) {
 			finalizaGravacaoLog();
-			fw = null;
 		}
 	}
 
@@ -439,7 +438,6 @@ public class PortalAPI_Utils {
 			if (fw == null) {
 				try {
 					fw = new FileWriter(new File("/sdcard/TemposTCC.txt"));
-					File f = new File("");
 				} catch (IOException e) {
 					System.out.println("Erro ao criar arquivo de log dos tempos." + e);
 					return;
@@ -458,12 +456,20 @@ public class PortalAPI_Utils {
 		if (fw != null) {
 			try {
 				fw.flush();
-				fw.close();
 			} catch (IOException e) {
-				System.out.println("Erros ao fechar o arquivo." + e);
-				return;
+				System.out.println("Erros ao gravar no arquivo." + e);
 			}
 		}
 	}
 
+	public static void encerraLog() {
+		if (fw != null) {
+			try {
+				fw.close();
+				fw = null;
+			} catch (IOException e) {
+				System.out.println("Erros ao fechar o arquivo." + e);
+			}
+		}
+	}
 }
