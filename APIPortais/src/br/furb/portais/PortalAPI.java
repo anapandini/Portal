@@ -113,6 +113,7 @@ public class PortalAPI {
 	 * @see br.furb.portal.api.PortalAPI#visao(br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Ponto, br.furb.portal.api.model.Sala, java.util.List, br.furb.portal.api.model.Camera, java.util.List, java.util.List)
 	 */
 	public List<Frustum> visaoCamera(List<PontoInteresse> pontosInteresse, Map<Integer, Sala> salas, Camera camera, Frustum frustum) {
+		this.ligaLogTempos();
 		long inicio = System.currentTimeMillis();
 
 		// Cria uma lista para guardar campos de visão auxiliares, que podem ser utilizados
@@ -124,6 +125,7 @@ public class PortalAPI {
 
 		long duracao = System.currentTimeMillis() - inicio;
 		PortalAPI_Utils.gravarLog("visaoCamera", duracao);
+		this.desligaLogTempos();
 		return frustumsAuxiliares;
 	}
 
@@ -142,6 +144,7 @@ public class PortalAPI {
 	 * @param frustum
 	 */
 	public void moverCamera(Camera camera, float novoXCamera, float novoYCamera, List<PontoInteresse> pontosInteresse, Map<Integer, Sala> salas, Frustum frustum) {
+		this.ligaLogTempos();
 		long inicio = System.currentTimeMillis();
 
 		boolean podeMover = true;
@@ -172,13 +175,14 @@ public class PortalAPI {
 
 		long duracao = System.currentTimeMillis() - inicio;
 		PortalAPI_Utils.gravarLog("moverCamera", duracao);
+		this.desligaLogTempos();
 	}
 
-	public void desligaLogTempos() {
+	private void desligaLogTempos() {
 		PortalAPI_Utils.setLogTempos(false);
 	}
 
-	public void ligaLogTempos() {
+	private void ligaLogTempos() {
 		PortalAPI_Utils.setLogTempos(true);
 	}
 

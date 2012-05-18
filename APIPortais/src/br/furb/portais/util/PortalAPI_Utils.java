@@ -439,14 +439,17 @@ public class PortalAPI_Utils {
 			if (fw == null) {
 				try {
 					fw = new FileWriter(new File("/sdcard/TemposTCC.txt"));
+					File f = new File("");
 				} catch (IOException e) {
 					System.out.println("Erro ao criar arquivo de log dos tempos." + e);
+					return;
 				}
 			}
 			try {
 				fw.write("Método: " + metodo + "\tDuração: " + duracao + "\r\n");
 			} catch (IOException e) {
 				System.out.println("Erro ao escrever no arquivo de log dos tempos" + e);
+				return;
 			}
 		}
 	}
@@ -458,6 +461,7 @@ public class PortalAPI_Utils {
 				fw.close();
 			} catch (IOException e) {
 				System.out.println("Erros ao fechar o arquivo." + e);
+				return;
 			}
 		}
 	}
