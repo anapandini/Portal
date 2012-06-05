@@ -21,8 +21,13 @@ import br.furb.portais.modelo.Ponto;
 public class PortalAPI_Utils {
 
 	private static boolean logTempos = false;
+	private static String nomeArquivoTempos = "TemposAmbiente";
 
 	private static FileWriter fw;
+
+	public static void setNomeArquivoTempos(String nome) {
+		PortalAPI_Utils.nomeArquivoTempos += nome + ".txt";
+	}
 
 	/**
 	 * Verifica se os dois segmentos de reta se intersectam.
@@ -437,7 +442,8 @@ public class PortalAPI_Utils {
 		if (PortalAPI_Utils.logTempos) {
 			if (fw == null) {
 				try {
-					fw = new FileWriter(new File("/sdcard/TemposTCC.txt"));
+					String file = "/sdcard/" + nomeArquivoTempos;
+					fw = new FileWriter(new File(file));
 				} catch (IOException e) {
 					System.out.println("Erro ao criar arquivo de log dos tempos." + e);
 					return;

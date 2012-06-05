@@ -182,6 +182,10 @@ public class PortalAPI {
 		PortalAPI_Utils.encerraLog();
 	}
 
+	public void setArquivoLogTempos(String nomeArquivo) {
+		PortalAPI_Utils.setNomeArquivoTempos(nomeArquivo);
+	}
+
 	private void desligaLogTempos() {
 		PortalAPI_Utils.setLogTempos(false);
 	}
